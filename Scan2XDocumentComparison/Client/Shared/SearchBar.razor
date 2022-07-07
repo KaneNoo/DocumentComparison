@@ -1,0 +1,29 @@
+﻿@inject IDocumentService DocumentService
+
+<div class="container search_bar" >
+    <EditForm Model="searchData">
+        <table>
+            <tr>
+                <th style="padding-right: 20px; ">Диапазон</th>
+                @*<td><input type="date" class="form-control" id="startDate" @bind-value="@startDate.Date.ToShortDateString()" /></td>*@
+                <td><InputDate class="form-control" @bind-Value="@searchData.StartDate" />  </td>
+                <td><InputDate class="form-control" @bind-Value="@searchData.EndDate" />  </td>
+                @*<td><input type="date" class="form-control" id="endDate" @bind-value="@endDate.Date.ToShortDateString()"/></td>*@
+                <td style="padding-left: 20px;"><button class="btn btn-success" style="background-color: #3eb842;" type="button" value="Поиск" @onclick="GetDocsByDate">Поиск</button></td>
+            </tr>
+        </table>
+    </EditForm>
+</div>
+
+
+@code {      
+
+    DocSearchData searchData = new DocSearchData() { StartDate = DateTime.Now.Date, EndDate = DateTime.Now.Date.AddDays(1).AddTicks(-1)};
+
+    private async void GetDocsByDate()
+    {
+        searchData.DocsOnPageCount = DocumentService.DocsOnPageCount;
+        searchData.PageCount = DocumentService.PageCount;
+        await DocumentService.GetDocumentsWithDifferences(searchData, 1);
+    }
+}

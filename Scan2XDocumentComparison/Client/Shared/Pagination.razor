@@ -1,0 +1,71 @@
+﻿@inject IDocumentService DocumentService
+
+<div style="margin-top: 20px;">
+    <table>
+        <tr>
+            <td align="left">
+                @if (startSelectionPage != 1)
+                {
+                    <a class="button other-page"
+                       href="search/1">
+                        1
+                    </a>
+                }
+
+                @for (int i = startSelectionPage; i <= endSelectionPage; i++)
+                {
+                    <a class="button @(i == DocumentService.CurrentPage ? "current-page" : "other-page")"
+                       href="search/@DocumentService.PageCount">
+                        @DocumentService.PageCount
+                    </a>
+                }
+
+                @if (endSelectionPage < DocumentService.PageCount)
+                {
+                    <a class="button"
+                       href="document/search/@DocumentService.PageCount">
+                        @DocumentService.PageCount
+                    </a>
+                }
+
+            </td>
+        </tr>
+    </table>
+</div>
+
+@code {
+
+    private int startSelectionPage = 1;
+    private int endSelectionPage = 1;
+
+    protected override void OnInitialized()
+    {
+        GetPageSelection();
+    }
+
+    public void GetPageSelection()
+    {
+
+        int startSelectionPage = 1;
+        int endSelectionPage = DocumentService.PageCount;
+        int pagesCount = 2;
+
+        if (DocumentService.CurrentPage - pagesCount > pagesCount)
+        {
+            startSelectionPage = DocumentService.CurrentPage - pagesCount;
+        }
+        else
+        {
+            startSelectionPage = 1;
+        }
+
+        if (DocumentService.CurrentPage + pagesCount > DocumentService.PageCount)
+        {
+            endSelectionPage = DocumentService.CurrentPage;
+        }
+        else
+        {
+            endSelectionPage = DocumentService.PageCount;
+        }
+    }
+}

@@ -1,0 +1,184 @@
+﻿@page "/document/detailed/{docNum}"
+@inject IDocumentService DocumentService
+
+<PageTitle>Просмотр документа</PageTitle>
+
+@if (document == null)
+{
+    <div class="container" style="justify-content:center">
+        <div class="card shadow" style="width: fit-content; border: none; display: inline-block;">
+            <div class="card-header-detailed">
+                <h4>@docNum</h4>
+            </div>
+
+            <div class="card-body-detailed" style="display: inline-block;">
+                <div class="empty_result">@message</div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container">
+        <div class="card shadow" style="width: fit-content; border: none; display: inline-block;">
+
+            <div class="card-header-detailed">
+                <h4>@docNum</h4>
+            </div>
+
+            <div class="card-body-detailed" style="display: inline-block;">
+                <table class="detailed">
+                    <tr>
+                        <th></th>
+                        <th>БД</th>
+                        <th>Документ</th>
+                    </tr>
+
+                    @*<tr>
+                            <th>Тип</th>
+                            <td>@document.DocInDB.DocType</td>
+                            <td>@document.ScannedDoc.DocType</td>
+                        </tr>*@
+
+                    <tr>
+                        <th>Дата</th>
+                        <td>@document.DocInDB.DocDate</td>
+                        <td>@document.ScannedDoc.DocDate</td>
+                    </tr>
+
+                    @*<tr>
+                            <th>№</th>
+                            <td>@document.DocInDB.DocNum</td>
+                            <td>@document.ScannedDoc.DocNum</td>
+                        </tr>*@
+
+                    <tr>
+                        <th class="result-@document.CompResult.Vendor">Поставщик</th>
+                        <td>@document.DocInDB.Vendor</td>
+                        <td>@document.ScannedDoc.Vendor</td>
+                    </tr>
+
+                    <tr>
+                        <th class="result-@document.CompResult.VendorInn">ИНН поставщика</th>
+                        <td>@document.DocInDB.VendorInn</td>
+                        <td>@document.ScannedDoc.VendorInn</td>
+                    </tr>
+
+                    <tr>
+                        <th class="result-@document.CompResult.VendorKpp">КПП поставщика</th>
+                        <td>@document.DocInDB.VendorKpp</td>
+                        <td>@document.ScannedDoc.VendorKpp</td>
+                    </tr>
+
+                    <tr>
+                        <th class="result-@document.CompResult.Customer">Покупатель</th>
+                        <td>@document.DocInDB.Customer</td>
+                        <td>@document.ScannedDoc.Customer</td>
+                    </tr>
+
+                    <tr>
+                        <th class="result-@document.CompResult.CustomerInn">ИНН покупателя</th>
+                        <td>@document.DocInDB.CustomerInn</td>
+                        <td>@document.ScannedDoc.CustomerInn</td>
+                    </tr>
+
+                    <tr>
+                        <th class="result-@document.CompResult.CustomerKpp">КПП покупателя</th>
+                        <td>@document.DocInDB.CustomerKpp</td>
+                        <td>@document.ScannedDoc.CustomerKpp</td>
+                    </tr>
+
+                    <tr>
+                        <th class="result-@document.CompResult.WithEdo">ЭДО</th>
+                        <td>@document.DocInDB.WithEdo</td>
+                        <td>@document.ScannedDoc.WithEdo</td>
+                    </tr>
+
+                    <tr>
+                        <th class="result-@document.CompResult.WithoutEdo">Без ЭДО</th>
+                        <td>@document.DocInDB.WithoutEdo.Trim()</td>
+                        <td>@document.ScannedDoc.WithoutEdo.Trim()</td>
+                    </tr>
+
+                    <tr>
+                        <th class="result-@document.CompResult.SumAll">Общая сумма</th>
+                        <td>@document.DocInDB.SumAll</td>
+                        <td>@document.ScannedDoc.SumAll</td>
+                    </tr>
+
+                    <tr>
+                        <th class="result-@document.CompResult.SumTax">Сумма налога</th>
+                        <td>@document.DocInDB.SumTax</td>
+                        <td>@document.ScannedDoc.SumTax</td>
+                    </tr>
+
+                    <tr>
+                        <th class="result-@document.CompResult.SumApp">Сумма по акту</th>
+                        <td>@document.DocInDB.SumApp</td>
+                        <td>@document.ScannedDoc.SumApp</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="card-footer">
+                <button type="button" class="btn btn-success" style="background-color: @bgColor; width: 100%" @onclick="SetDocVerified">@docVerifyButtonText</button>
+            </div>
+        </div>
+        <div style="display: inline-block; box-sizing:border-box; width: fit-content; align-items: center">
+            <object data="@pdfFile" type="application/pdf"></object>
+        </div>
+    </div>
+}
+
+@code{
+    private DetailedDocument? document = null;
+
+    private string pdfFile;
+
+    private string message = string.Empty;
+
+    private string docVerifyButtonText = "Подтвердить правильность документа";
+    private string bgColor = "#ddeb49";
+
+    [Parameter]
+    public string docNum { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        message = "Подгружаем документ...";
+        var result = await DocumentService.GetDetailedDocument(docNum);
+
+        if (!result.Success)
+        {
+            message = result.Message;
+        }
+        else
+        {
+            document = result.Data;
+
+            var fileResponse = await DocumentService.GetPdfFile(docNum);
+
+            if (fileResponse != null && fileResponse.Success)
+            {
+                var pdfContent = fileResponse.Data;
+                pdfFile = $"data:application/pdf;base64,{Convert.ToBase64String(pdfContent)}";
+            }
+        }
+
+    }
+
+    private async Task SetDocVerified()
+    {
+        var response = await DocumentService.SetDocumentVerified(docNum);
+        response.Success = false;
+        if (response.Success)
+        {
+            docVerifyButtonText = "Подтверждено";
+            bgColor = "#3eb842";
+        }
+        else
+        {
+            docVerifyButtonText = "Произошла ошибка...";
+            bgColor = "#f74d4d";
+        }
+    }
+}

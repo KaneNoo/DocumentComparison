@@ -1,0 +1,66 @@
+﻿@page "/"
+@page "/search/{page:int}"
+
+@inject IDocumentService DocumentService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Документы</PageTitle>
+
+
+<div class="container">
+    <div class="card shadow" style="background-color:transparent; width:fit-content;">
+        <div class="card-header">
+            <SearchBar />
+        </div>
+
+        <div class="card-body">
+            <DocumentList />
+        </div>
+    </div>
+</div>
+
+
+
+
+@code{
+    [Parameter]
+    public DateTime StartDate { get; set; } = DateTime.Now.Date;
+
+    [Parameter]
+    public DateTime EndDate { get; set; } = DateTime.Now.Date.AddDays(1).AddTicks(-1);
+
+    [Parameter]
+    public int PageCount { get; set; } = 1;
+
+    [Parameter]
+    public int Page { get; set; } = 0;
+
+    [Parameter]
+    public int DocsOnPageCount { get; set; } = 10;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Page == 0)
+        {
+            Page = 1;
+            NavigationManager.NavigateTo($"/search/{Page}");
+
+        }
+        StartDate = DocumentService.LastSearchData.StartDate;
+        EndDate = DocumentService.LastSearchData.EndDate;
+        DocsOnPageCount = DocumentService.LastSearchData.DocsOnPageCount;
+
+
+        var searchData = new DocSearchData()
+        {
+            StartDate = StartDate,
+            EndDate = EndDate,
+            PageCount = PageCount,
+            DocsOnPageCount = DocsOnPageCount,
+
+        };
+        await DocumentService.GetDocumentsWithDifferences(searchData, Page);
+    }
+
+
+}

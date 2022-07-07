@@ -1,0 +1,80 @@
+﻿@inject IDocumentService DocumentService
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div>
+    @if (DocumentService.Documents == null || DocumentService.Documents.Count == 0)
+    {
+
+        <p>@DocumentService.Message</p>
+
+    }
+    else
+    {
+
+        <table id="documents">
+            <tr>
+                <th>Дата</th>
+                <th>№</th>
+                <th>Поставщик</th>
+                <th>ИНН Поставщика</th>
+                <th>КПП Поставщика</th>
+                <th>Покупатель</th>
+                <th>ИНН Покупателя</th>
+                <th>КПП Покупателя</th>
+                <th>ЭДО</th>
+                <th>Без ЭДО</th>
+                <th>Общая сумма</th>
+                <th>Сумма налога</th>
+                <th>Сумма по акту</th>
+            </tr>
+            @for (int i = 0; i < DocumentService.Documents.Count(); i++)
+            {
+                var document = DocumentService.Documents[i].DocInDB;
+                var comparisonResult = DocumentService.Documents[i].CompResult;
+
+                <tr @onclick="() => OpenDetailedDocumentInNewTab(document.DocNum)">
+                    <td>@document.DocDate.Value.ToString("g")</td>
+                    <td class="result-@comparisonResult.DocNum">@document.DocNum</td>
+                    <td class="result-@comparisonResult.Vendor">@document.Vendor</td>
+                    <td class="result-@comparisonResult.VendorInn">@document.VendorInn</td>
+                    <td class="result-@comparisonResult.VendorKpp">@document.VendorKpp</td>
+                    <td class="result-@comparisonResult.Customer">@document.Customer</td>
+                    <td class="result-@comparisonResult.CustomerInn">@document.CustomerInn</td>
+                    <td class="result-@comparisonResult.CustomerKpp">@document.CustomerKpp</td>
+                    <td class="result-@comparisonResult.WithEdo">@document.WithEdo</td>
+                    <td class="result-@comparisonResult.WithoutEdo">@document.WithoutEdo</td>
+                    <td class="result-@comparisonResult.SumAll">@document.SumAll</td>
+                    <td class="result-@comparisonResult.SumTax">@document.SumTax</td>
+                    <td class="result-@comparisonResult.SumApp">@document.SumApp</td>
+                </tr>
+            }
+
+
+        </table>
+
+        <Pagination />
+    }
+    </div>
+
+    @code{
+
+private static List<DetailedDocument> Documents = new List<DetailedDocument>();
+
+
+    protected override void OnInitialized()
+    {
+        DocumentService.DocumentsChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        DocumentService.DocumentsChanged -= StateHasChanged;
+    }
+
+    public async void OpenDetailedDocumentInNewTab(string docNum)
+    {
+        await JSRuntime.InvokeAsync<object>("open", $"/document/detailed/{docNum}", "_blank");
+    }
+    }
+
